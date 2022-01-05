@@ -55,5 +55,27 @@ ul li {
     border-radius: 10px;
     box-shadow: 0 2px 8px rgb(175, 198, 241);
     text-align: center;
-    padding-top: 25px;
+    padding: 25px 30px 0 30px;
+}
+
+#delete-selected-menu {
+    position: absolute;
+    background-color: rgb(255, 254, 254);
+    color: black;
+    visibility: hidden;
+    border: 1px rgb(175, 198, 241) solid;
+    border-radius: 5px;
+    font-size: 20px;
+}
+
+#delete-selected-menu:hover {
+    background-color: rgb(175, 174, 174);
+    cursor: pointer;
+}
+
+#selected-menu-rectangle {
+    position: absolute;
+    visibility: hidden;
+    background-color: rgb(205, 219, 245);
+    border: 1px rgb(175, 198, 241) solid;
 }

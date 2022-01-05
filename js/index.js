@@ -1,16 +1,20 @@
-'use strict';
-
 const uniqueFiles = new Set();
 
-let selectedLiElement = null;
+let editedLiElement = null;
 
 const filesList = document.getElementById("files");
 const fileMenu = document.getElementById("file-menu");
 const createMenu = document.getElementById("create-menu");
+const deleteSelectedMenu = document.getElementById("delete-selected-menu");
+
+let eventAfterSelection = false;
 
 function hideAllMenus() {
     createMenu.style.visibility = "hidden";
     fileMenu.style.visibility = "hidden";
+    deleteSelectedMenu.style.visibility = "hidden";
+
+    unselectForDeletion();
 }
 
 function getShowFileMenuCallback(liElement) {
@@ -21,13 +25,11 @@ function getShowFileMenuCallback(liElement) {
         fileMenu.style.visibility = "visible";
         fileMenu.style.top = event.clientY + "px";
         fileMenu.style.left = event.clientX + "px";
-        selectedLiElement = liElement;
-        console.log(selectedLiElement);
-        // createMenu.style.visibility = "hidden";
+        editedLiElement = liElement;
+        console.log(editedLiElement);
         event.stopPropagation();
     }
 }
-
 
 createMenu.addEventListener("click", (e) => {
     hideAllMenus();
@@ -38,13 +40,12 @@ createMenu.addEventListener("click", (e) => {
     if (fileName === null) {
         return;
     }
-
     if (fileName === "") {
         alert("Error: You did not enter a file name.");
         return;
     }
 
-    // Проверить, что имя файла уникально!!
+    // check for uniqueness of file name
 
     if (uniqueFiles.has(fileName)) {
         alert("Error! A file with this name already exists!");
@@ -65,39 +66,34 @@ createMenu.addEventListener("click", (e) => {
     filesList.appendChild(fileNameLi);
 });
 
-// document.addEventListener("click", (e) => {
-//     console.log("Show CreateMenu event", e);
-//     createMenu.style.visibility = "visible";
-//     createMenu.style.top = e.clientY + "px";
-//     createMenu.style.left = e.clientX + "px";
-//     e.stopPropagation();
-// });
-
 document.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     hideAllMenus();
     createMenu.style.visibility = "visible";
     createMenu.style.top = event.clientY + "px";
     createMenu.style.left = event.clientX + "px";
-    // fileMenu.style.visibility = "hidden";
     event.stopPropagation();
 
 });
 document.addEventListener("click", (event) => {
     if (event.button !== 2) {
+        console.log("mouse click check btn")
+        if (eventAfterSelection) {
+            eventAfterSelection = false;
+            return;
+        }
+
         hideAllMenus();
-        // createMenu.style.visibility = "hidden";
-        // fileMenu.style.visibility = "hidden";
     }
 });
 
 document.getElementById("file-menu-rename").addEventListener("click", (event) => {
     hideAllMenus();
     event.stopPropagation();
-    if (selectedLiElement == null) {
+    if (editedLiElement == null) {
         return;
     }
-    let oldName = selectedLiElement.innerText;
+    let oldName = editedLiElement.innerText;
     let newName = prompt("Please, enter file name!", oldName);
     console.log(newName);
     if (newName == null) {
@@ -112,7 +108,94 @@ document.getElementById("file-menu-rename").addEventListener("click", (event) =>
     }
     uniqueFiles.delete(oldName);
     uniqueFiles.add(newName);
-    selectedLiElement.innerText = newName;
-    selectedLiElement = null;
+    editedLiElement.innerText = newName;
+    editedLiElement = null;
 
+});
+
+document.getElementById("file-menu-delete").addEventListener("click", (event) => {
+    hideAllMenus();
+    event.stopPropagation();
+    editedLiElement.remove();
+    uniqueFiles.delete(editedLiElement.innerText);
+    editedLiElement = null;
+});
+
+
+// Selected area;
+let mouseDown = false;
+let xStart, yStart, xEnd, yEnd;
+
+document.addEventListener("mousedown", (event) => {
+    console.log("Select area mousedown", event);
+    xStart = event.pageX;
+    yStart = event.pageY;
+    mouseDown = true;
+});
+
+document.addEventListener("mousemove", (event) => {
+    if (!mouseDown) {
+        return;
+    }
+    // console.log("Select area - mousemove", event);
+    xEnd = event.pageX;
+    yEnd = event.pageY;
+});
+
+let selectedItemsForDeletion = [];
+
+document.addEventListener("mouseup", (event) => {
+    if (!mouseDown) {
+        return;
+    }
+    mouseDown = false;
+
+    if (xEnd == undefined || yEnd == undefined) {
+        // it was not selection
+        return;
+    }
+
+    console.log("Select area - mouseup", event);
+    let selectedAreaTop = yStart < yEnd ? yStart : yEnd;
+    let selectedAreaBottom = yStart > yEnd ? yStart : yEnd;
+    let selectedAreaRight = xStart < xEnd ? xStart : xEnd;
+    let selectedAreaLeft = xStart > xEnd ? xStart : xEnd;
+
+    // !!! it's required to cleanup them
+    yEnd = undefined;
+    xEnd = undefined;
+
+    selectedItemsForDeletion = [];
+    for (let li of filesList.children) {
+        let rect = li.getBoundingClientRect();
+
+        if (selectedAreaTop <= rect.top && rect.bottom <= selectedAreaBottom &&
+            selectedAreaRight <= rect.right && rect.left <= selectedAreaLeft) {
+            // item located within selected area
+            li.style.backgroundColor = "rgb(34, 91, 197)";
+            selectedItemsForDeletion.push(li);
+        }
+    }
+
+    if (selectedItemsForDeletion.length != 0) {
+        deleteSelectedMenu.style.visibility = "visible";
+        deleteSelectedMenu.style.top = event.clientY + "px";
+        deleteSelectedMenu.style.left = event.clientX + "px";
+        eventAfterSelection = true;
+    }
+});
+
+function unselectForDeletion() {
+    for (let li of selectedItemsForDeletion) {
+        li.style.backgroundColor = "white";
+    }
+}
+
+deleteSelectedMenu.addEventListener("click", (event) => {
+    for (let li of selectedItemsForDeletion) {
+        li.remove();
+        uniqueFiles.delete(li.innerText);
+    }
+    selectedItemsForDeletion = [];
+    deleteSelectedMenu.style.visibility = "hidden";
 });

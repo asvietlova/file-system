@@ -56,6 +56,7 @@ ul li {
     box-shadow: 0 2px 8px rgb(175, 198, 241);
     text-align: center;
     padding: 25px 30px 0 30px;
+    cursor: move;
 }
 
 #delete-selected-menu {
@@ -73,9 +74,6 @@ ul li {
     cursor: pointer;
 }
 
-#selected-menu-rectangle {
-    position: absolute;
-    visibility: hidden;
-    background-color: rgb(205, 219, 245);
-    border: 1px rgb(175, 198, 241) solid;
+li.over {
+    border: 4px dotted rgb(47, 91, 233);
 }

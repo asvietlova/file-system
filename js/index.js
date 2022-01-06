@@ -44,9 +44,7 @@ createMenu.addEventListener("click", (e) => {
         alert("Error: You did not enter a file name.");
         return;
     }
-
     // check for uniqueness of file name
-
     if (uniqueFiles.has(fileName)) {
         alert("Error! A file with this name already exists!");
         return;
@@ -61,7 +59,15 @@ createMenu.addEventListener("click", (e) => {
     // }
 
     const fileNameLi = document.createElement("li");
+    fileNameLi.setAttribute('draggable', true);
     fileNameLi.innerText = fileName;
+    fileNameLi.addEventListener('dragstart', handleDragStart, false);
+    fileNameLi.addEventListener('dragenter', handleDragEnter, false);
+    fileNameLi.addEventListener('dragover', handleDragOver, false);
+    fileNameLi.addEventListener('dragleave', handleDragLeave, false);
+    fileNameLi.addEventListener('drop', handleDrop, false);
+    fileNameLi.addEventListener('dragend', handleDragEnd, false);
+
     fileNameLi.addEventListener("contextmenu", getShowFileMenuCallback(fileNameLi));
     filesList.appendChild(fileNameLi);
 });
@@ -199,3 +205,53 @@ deleteSelectedMenu.addEventListener("click", (event) => {
     selectedItemsForDeletion = [];
     deleteSelectedMenu.style.visibility = "hidden";
 });
+
+
+
+// Drag'n'dropp
+let dragSrcEl = null;
+
+function handleDragStart(e) {
+    this.style.opacity = '0.4';
+
+    dragSrcEl = this;
+    console.log("Srag start ", dragSrcEl)
+
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragEnd(e) {
+    this.style.opacity = '1';
+    let items = document.getElementsByTagName("li")
+    for (let item of items) {
+        item.classList.remove('over');
+    }
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) {
+        e.preventDefault();
+    }
+
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    e.stopPropagation();
+
+    if (dragSrcEl !== this) {
+        dragSrcEl.innerHTML = this.innerHTML;
+        this.innerHTML = e.dataTransfer.getData('text/html');
+    }
+
+    return false;
+}
